@@ -1,0 +1,54 @@
+@startuml
+
+"Customer\n via mobile app" as s
+
+cloud "Internet" {
+    [Payment Service\n(assist)] as pay
+    [Maps API\n(Yandex)] as map
+    [SMS Provider] as sms
+}
+
+node Central {
+    package "Application Server\nNodeJS via PM2" as as0 {
+        [Partner Discovery] as pd
+        [Central Catalog] as c0
+        [User Management\nOAuth2 Authorization Server] as sso
+        () HTTP as h0
+    }
+    package "Web Server\nStatic content" {
+        [Customer portal]
+        [Manager portal]
+        [Manager portal]
+    }
+    database Users as dbu
+    database Partners as db0
+    database Catalog as dbc
+
+    pd -left- h0
+    sso -left- h0
+    pd -down-> db0
+    sso -down-> dbu
+    c0 -down-> dbc
+
+    note bottom of c0
+        Aggregates catalogs of every partner
+    end note
+}
+
+node "Partner's store" {
+    package "Application Server\nNodeJS via PM2" as as1 {
+        [Order Management] as o1
+        [Catalog] as c1
+        () HTTP as h1
+    }
+    database DB as db1
+    as1 --> db1
+    o1 -left- h1
+    c1 -right- h1
+}
+
+s ..> map
+s ..> h0
+s ..> h1
+
+@enduml
