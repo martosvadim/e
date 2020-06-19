@@ -1,0 +1,147 @@
+@startuml
+
+package UserManagement {
+    entity Customer {
+        * ID
+        --
+        login
+        passwordHash
+        name
+        phoneNumber
+        email
+        * primaryAddressID
+    }
+
+    entity Address {
+        * ID
+        --
+        * customerID
+        * name
+        * city
+        * street
+        * building
+        entrance
+        floor
+        room
+    }
+}
+
+package CentralCatalog {
+    entity Product {
+        * ID
+        --
+        imageUrl
+        name
+        averageStars
+    }
+
+    entity ProductRating {
+        * productID
+        * customerID
+        --
+        stars
+    }
+
+    entity Attribute {
+        * ID
+        --
+        name
+    }
+
+    entity ProductAttribute {
+        * productID
+        * attributeID
+        --
+        value
+    }
+}
+
+package "LocalStore #8" {
+    entity "Product" as LocalProduct {
+        * ID
+        --
+        * sku
+        * barcode
+        imageUrl
+        * name
+        averageStars
+        * catalogEntryLeftIndex
+        * **available**
+    }
+
+    note right of LocalProduct {
+        Products are synced with CentralCatalog
+        on daily basis. However it can't be deleted
+        from the local store to keep DB consistency
+    }
+
+    entity "Customer" as LocalCustomer {
+        * ID
+        --
+    }
+
+    entity "ProductRating" as LocalProductRating {
+        * productID
+        * customerID
+        --
+        stars
+    }
+
+    note right of LocalProductRating {
+        Accumulates product ratings
+        To be sent to CentralCatalog nightly
+    }
+
+    entity "Attribute" as LocalAttribute {
+        * ID
+        --
+        name
+        type
+    }
+
+    entity "ProductAttribute" as LocalProductAttribute {
+        * productID
+        * attributeID
+        --
+        value
+    }
+
+    entity "CatalogEntry" as LocalCatalogEntry {
+        * leftIndex
+        * rightIndex
+        --
+        * name
+        * depth
+        code
+    }
+
+    note right of LocalCatalogEntry  {
+        Nested set model
+    }
+}
+
+Product ||--o{ ProductRating
+Product ||--o{ ProductAttribute
+ProductAttribute }o--|| Attribute
+Customer ||..o{ ProductRating
+Customer ||--|{ Address
+
+LocalProduct ||--o{ LocalProductRating
+LocalProduct ||--o{ LocalProductAttribute
+LocalProductAttribute }o--|| LocalAttribute
+LocalCustomer ||..o{ LocalProductRating
+LocalProduct }o--|| LocalCatalogEntry
+
+package Example {
+    One ||..|{ OneOrMany
+    One ||..o| ZeroOrOne
+    One ||--o{ ZeroOrMany
+
+    entity EntityExample {
+        * identifying_attribute
+        --
+        * mandatory_attribute
+        optional_attribute
+    }
+}
+@enduml
