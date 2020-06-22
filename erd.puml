@@ -158,7 +158,7 @@ package "LocalStore #8" {
         --
         * customerID
         * status
-
+        storageCellBarcode
     }
 
     entity "DeliveryAddress" as LocalDeliveryAddress {
@@ -187,10 +187,6 @@ package "LocalStore #8" {
         percent
     }
 
-    note left of LocalCatalogPriceRule {
-        LineItem.price = Product.basePrice + Product.basePrice * percent / 100
-    }
-
     entity "GroupPriceRule" as LocalGroupPriceRule {
         ID
         --
@@ -199,14 +195,17 @@ package "LocalStore #8" {
         percent
     }
 
-    note left of LocalGroupPriceRule {
-        LineItem.price = Product.basePrice + Product.basePrice * percent / 100
-    }
-
     entity "ProductGroup" as LocalProductGroup {
         groupNumber
         productID
         --
+    }
+
+    entity "StorageCell" as LocalStorageCell {
+        barcode
+        --
+        name
+        status
     }
 
     LocalProduct ||--o{ LocalProductRating
@@ -221,6 +220,7 @@ package "LocalStore #8" {
     LocalBasket ||--o{ LocalLineItem
     LocalLineItem }o--|| LocalProduct
     LocalOrder ||--|| LocalDeliveryAddress
+    LocalOrder }o-o| LocalStorageCell
 
     LocalProductGroup ||--|{ LocalProduct
     LocalGroupPriceRule ||--|| LocalProductGroup
