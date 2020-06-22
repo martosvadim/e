@@ -69,13 +69,18 @@ package "LocalStore #8" {
         * **available**
         * quantum
         * measure
-        * price
+        * basePrice
     }
 
     note right of LocalProduct {
         Products are synced with CentralCatalog
         on daily basis. However it can't be deleted
         from the local store to keep DB consistency
+    }
+
+    note left of LocalProduct {
+        Base price without increases and discounts.
+        Comes when catalog is being imported
     }
 
     entity "Customer" as LocalCustomer {
@@ -90,9 +95,13 @@ package "LocalStore #8" {
         stars
     }
 
-    note right of LocalProductRating {
-        Accumulates product ratings
-        To be sent to CentralCatalog nightly
+    note bottom of LocalProductRating {
+        Accumulates product ratings.
+        To be sent to CentralCatalog nightly.
+        Application accept all the clicks on rating,
+        but accept only unique records asynchronously.
+        Product.averageStars field is to be
+        recalculated every N hours
     }
 
     entity "Attribute" as LocalAttribute {
@@ -118,7 +127,7 @@ package "LocalStore #8" {
         code
     }
 
-    note right of LocalCatalogEntry  {
+    note bottom of LocalCatalogEntry  {
         Nested set model
     }
 
@@ -129,6 +138,12 @@ package "LocalStore #8" {
         * price
         * quantity
         * status
+    }
+
+    note bottom of LocalLineItem {
+        Price is to be calculated
+        at the moment order is being created.
+        See GroupPriceRule & CatalogPriceRule
     }
 
     entity "Basket" as LocalBasket {
@@ -157,6 +172,59 @@ package "LocalStore #8" {
         floor
         room
     }
+
+    note bottom of LocalDeliveryAddress {
+        A copy of customer's address
+        which is taken at the same time
+        when order is being created
+    }
+
+    entity "CatalogPriceRule" as LocalCatalogPriceRule {
+        ID
+        --
+        catalogEntryLeftIndex
+        priority
+        percent
+    }
+
+    note left of LocalCatalogPriceRule {
+        LineItem.price = Product.basePrice + Product.basePrice * percent / 100
+    }
+
+    entity "GroupPriceRule" as LocalGroupPriceRule {
+        ID
+        --
+        groupNumber
+        priority
+        percent
+    }
+
+    note left of LocalGroupPriceRule {
+        LineItem.price = Product.basePrice + Product.basePrice * percent / 100
+    }
+
+    entity "ProductGroup" as LocalProductGroup {
+        groupNumber
+        productID
+        --
+    }
+
+    LocalProduct ||--o{ LocalProductRating
+    LocalProduct ||--o{ LocalProductAttribute
+    LocalProductAttribute }o--|| LocalAttribute
+    LocalCustomer ||..o{ LocalProductRating
+    LocalProduct }o--|| LocalCatalogEntry
+    LocalOrder |o--|| LocalBasket
+    LocalOrder |o..|| LocalCustomer
+
+    LocalBasket }o..|| LocalCustomer
+    LocalBasket ||--o{ LocalLineItem
+    LocalLineItem }o--|| LocalProduct
+    LocalOrder ||--|| LocalDeliveryAddress
+
+    LocalProductGroup ||--|{ LocalProduct
+    LocalGroupPriceRule ||--|| LocalProductGroup
+    LocalCatalogPriceRule ||--|| LocalCatalogEntry
 }
 
 Product ||--o{ ProductRating
@@ -164,19 +232,6 @@ Product ||--o{ ProductAttribute
 ProductAttribute }o--|| Attribute
 Customer ||..o{ ProductRating
 Customer ||--|{ Address
-
-LocalProduct ||--o{ LocalProductRating
-LocalProduct ||--o{ LocalProductAttribute
-LocalProductAttribute }o--|| LocalAttribute
-LocalCustomer ||..o{ LocalProductRating
-LocalProduct }o--|| LocalCatalogEntry
-LocalOrder |o--|| LocalBasket
-LocalOrder |o..|| LocalCustomer
-
-LocalBasket }o..|| LocalCustomer
-LocalBasket ||--o{ LocalLineItem
-LocalLineItem }o--|| LocalProduct
-LocalOrder ||--|| LocalDeliveryAddress
 
 
 package Example {
