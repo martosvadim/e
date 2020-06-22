@@ -67,6 +67,9 @@ package "LocalStore #8" {
         averageStars
         * catalogEntryLeftIndex
         * **available**
+        * quantum
+        * measure
+        * price
     }
 
     note right of LocalProduct {
@@ -118,6 +121,42 @@ package "LocalStore #8" {
     note right of LocalCatalogEntry  {
         Nested set model
     }
+
+    entity "LineItem" as LocalLineItem {
+        * productID
+        * basketID
+        --
+        * price
+        * quantity
+        * status
+    }
+
+    entity "Basket" as LocalBasket {
+        * ID
+        --
+        * customerID
+        * status
+    }
+
+    entity "Order" as LocalOrder {
+        * basketID
+        --
+        * customerID
+        * status
+
+    }
+
+    entity "DeliveryAddress" as LocalDeliveryAddress {
+        * basketID
+        --
+        * name
+        * city
+        * street
+        * building
+        entrance
+        floor
+        room
+    }
 }
 
 Product ||--o{ ProductRating
@@ -131,6 +170,14 @@ LocalProduct ||--o{ LocalProductAttribute
 LocalProductAttribute }o--|| LocalAttribute
 LocalCustomer ||..o{ LocalProductRating
 LocalProduct }o--|| LocalCatalogEntry
+LocalOrder |o--|| LocalBasket
+LocalOrder |o..|| LocalCustomer
+
+LocalBasket }o..|| LocalCustomer
+LocalBasket ||--o{ LocalLineItem
+LocalLineItem }o--|| LocalProduct
+LocalOrder ||--|| LocalDeliveryAddress
+
 
 package Example {
     One ||..|{ OneOrMany
